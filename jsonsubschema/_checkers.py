@@ -947,6 +947,7 @@ class JSONTypeArray(JSONschema):
         self.items_ = self.get("items", JSONtop())
         self.additionalItems = self.get("additionalItems", True)
         self.uniqueItems = self.get("uniqueItems", False)
+        self.contains = self.get("contains", None)
 
     def compute_actual_maxItems(self):
         if utils.is_list(self.items_) and is_bot(self.additionalItems):
@@ -1109,6 +1110,25 @@ class JSONTypeArray(JSONschema):
             if not s1.uniqueItems and s2.uniqueItems:
                 print_db("__02__")
                 return False
+            #
+            # -- contains
+            if s2.contains is not None:
+                if s1.contains is not None:
+                    if not s1.contains.isSubtype(s2.contains):
+                        print_db("contains__01")
+                        return False
+                else:
+                    # LHS has no contains, RHS requires contains.
+                    # Check if all items of LHS are subtypes of RHS.contains
+                    if utils.is_dict(s1.items_):
+                        if not s1.items_.isSubtype(s2.contains):
+                            print_db("contains__02")
+                            return False
+                    elif utils.is_list(s1.items_):
+                        if not any(item.isSubtype(s2.contains)
+                                   for item in s1.items_):
+                            print_db("contains__03")
+                            return False
             #
             # -- items = {not empty}
             # no need to check additionalItems

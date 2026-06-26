@@ -80,6 +80,11 @@ def canonicalize_dict(d, outer_key=None):
     # Start canonicalization. Don't modify original dict.
     d = copy.deepcopy(d)
 
+    # Rewrite if/then/else into anyOf+allOf before processing connectors.
+    if "if" in d:
+        d = canonicalize_if_then_else(d)
+        has_connectors = definitions.Jconnectors.intersection(d.keys())
+
     if has_connectors:
         return canonicalize_connectors(d)
     elif "enum" in d.keys():
@@ -177,6 +182,32 @@ def canonicalize_enum(d):
 def canonicalize_const(d):
     d["enum"] = [d.pop("const")]
     return canonicalize_enum(d)
+
+
+def canonicalize_if_then_else(d):
+    """Rewrite if/then/else into equivalent anyOf+allOf.
+
+    {if: C, then: T, else: E} becomes:
+    {anyOf: [{allOf: [C, T]}, {allOf: [{not: C}, E]}]}
+
+    Combined with any other keywords in d via allOf.
+    """
+    if_schema = d.pop("if")
+    then_schema = d.pop("then", {})  # defaults to {} (accept everything)
+    else_schema = d.pop("else", {})  # defaults to {} (accept everything)
+
+    rewritten = {"anyOf": [
+        {"allOf": [if_schema, then_schema]},
+        {"allOf": [{"not": if_schema}, else_schema]},
+    ]}
+
+    # If d still has other keywords, combine via allOf
+    remaining = {k: v for k, v in d.items()
+                 if k in definitions.Jkeywords}
+    if remaining:
+        return {"allOf": [remaining, rewritten]}
+    else:
+        return rewritten
 
 def canonicalize_connectors(d):
     connectors = definitions.Jconnectors.intersection(d.keys())
@@ -384,6 +415,9 @@ def simplify_schema_and_embed_checkers(s):
     if "additionalItems" in s and utils.is_dict(s["additionalItems"]):
         s["additionalItems"] = simplify_schema_and_embed_checkers(
             s["additionalItems"])
+
+    if "contains" in s and utils.is_dict(s["contains"]):
+        s["contains"] = simplify_schema_and_embed_checkers(s["contains"])
 
     # json.object specific
     if "properties" in s:
