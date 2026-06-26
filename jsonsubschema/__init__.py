@@ -13,6 +13,7 @@ isSubschema = api.isSubschema
 meetSchemas = api.meet
 joinSchemas = api.join
 isEquivalent = api.isEquivalent
+schemaDiff = api.schemaDiff
 
 canonicalizeSchema = _canonicalization.canonicalize_schema
 

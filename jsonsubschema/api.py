@@ -69,6 +69,47 @@ def isEquivalent(s1, s2):
     return isSubschema(s1, s2) and isSubschema(s2, s1)
 
 
+def schemaDiff(s1, s2):
+    """Analyze the compatibility relationship between two schemas.
+
+    Returns one of:
+    - 'equivalent': s1 <: s2 and s2 <: s1
+    - 'backward_compatible': s1 <: s2 (s1 is more restrictive)
+    - 'forward_compatible': s2 <: s1 (s2 is more restrictive)
+    - 'breaking': neither direction holds
+    - 'unknown': an unsupported feature prevented the check
+    """
+    from jsonsubschema.exceptions import _UnsupportedCase
+
+    try:
+        fwd = isSubschema(s1, s2)
+    except _UnsupportedCase:
+        fwd = None
+
+    try:
+        bwd = isSubschema(s2, s1)
+    except _UnsupportedCase:
+        bwd = None
+
+    if fwd is None or bwd is None:
+        if fwd is True and bwd is True:
+            return "equivalent"
+        elif fwd is True:
+            return "backward_compatible"
+        elif bwd is True:
+            return "forward_compatible"
+        return "unknown"
+
+    if fwd and bwd:
+        return "equivalent"
+    elif fwd:
+        return "backward_compatible"
+    elif bwd:
+        return "forward_compatible"
+    else:
+        return "breaking"
+
+
 def is_subschema_with_reason(s1, s2):
     """
     Check if s1 is a subschema of s2, with detailed failure reasons.
