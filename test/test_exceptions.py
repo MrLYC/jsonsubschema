@@ -65,21 +65,19 @@ class TestUnsupportedNegatedArray(unittest.TestCase):
 
         self.assertIn("Array negation", str(cm.exception))
 
-    def test_negation_of_array_with_minitems(self):
-        """Negating an array schema with minItems should raise exception"""
+    def test_negation_of_array_with_minitems_now_supported(self):
+        """Negating an array schema with minItems is now supported"""
         s1 = {"type": "integer"}
         s2 = {"not": {"type": "array", "minItems": 1}}
+        # integer is not an array, so always subtype of not(array)
+        self.assertTrue(isSubschema(s1, s2))
 
-        with self.assertRaises(UnsupportedNegatedArray) as cm:
-            isSubschema(s1, s2)
-
-    def test_negation_of_array_with_maxitems(self):
-        """Negating an array schema with maxItems should raise exception"""
+    def test_negation_of_array_with_maxitems_now_supported(self):
+        """Negating an array schema with maxItems is now supported"""
         s1 = {"type": "boolean"}
         s2 = {"not": {"type": "array", "maxItems": 5}}
-
-        with self.assertRaises(UnsupportedNegatedArray) as cm:
-            isSubschema(s1, s2)
+        # boolean is not an array, so always subtype of not(array)
+        self.assertTrue(isSubschema(s1, s2))
 
     def test_negation_of_array_with_uniqueitems(self):
         """Negating an array schema with uniqueItems should raise exception"""
@@ -127,21 +125,19 @@ class TestUnsupportedNegatedObject(unittest.TestCase):
         with self.assertRaises(UnsupportedNegatedObject) as cm:
             isSubschema(s1, s2)
 
-    def test_negation_of_object_with_minproperties(self):
-        """Negating an object schema with minProperties should raise exception"""
+    def test_negation_of_object_with_minproperties_now_supported(self):
+        """Negating an object schema with minProperties is now supported"""
         s1 = {"type": "null"}
         s2 = {"not": {"type": "object", "minProperties": 1}}
+        # null is not an object, so always subtype of not(object)
+        self.assertTrue(isSubschema(s1, s2))
 
-        with self.assertRaises(UnsupportedNegatedObject) as cm:
-            isSubschema(s1, s2)
-
-    def test_negation_of_object_with_maxproperties(self):
-        """Negating an object schema with maxProperties should raise exception"""
+    def test_negation_of_object_with_maxproperties_now_supported(self):
+        """Negating an object schema with maxProperties is now supported"""
         s1 = {"type": "array"}
         s2 = {"not": {"type": "object", "maxProperties": 10}}
-
-        with self.assertRaises(UnsupportedNegatedObject) as cm:
-            isSubschema(s1, s2)
+        # array is not an object, so always subtype of not(object)
+        self.assertTrue(isSubschema(s1, s2))
 
     def test_negation_of_plain_object_succeeds(self):
         """Negating a plain object without constraints should succeed"""

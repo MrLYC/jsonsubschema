@@ -1221,15 +1221,30 @@ class JSONTypeArray(JSONschema):
 
     @staticmethod
     def neg(s):
-        # for k, default in JSONTypeArray.kw_defaults.items():
-        #     if s.__getattr__(k) != default:
-        #         break
-        # else:
-        if s.keys() & definitions.JtypesToKeywords['array']:
-            raise UnsupportedNegatedArray(schema=s)
-        else: 
-             return boolToConstructor.get("anyOf")(
+        array_kws = s.keys() & set(definitions.JtypesToKeywords['array'])
+        non_arrays = boolToConstructor.get("anyOf")(
             {"anyOf": get_default_types_except("array")})
+
+        if not array_kws:
+            return non_arrays
+
+        # Handle negation of minItems/maxItems-only constraints
+        simple_kws = array_kws - {"items", "additionalItems", "uniqueItems"}
+        if array_kws == simple_kws:
+            # Only minItems/maxItems — complement is expressible
+            negated_arrays = []
+            if "minItems" in s:
+                negated_arrays.append(
+                    JSONTypeArray({"type": "array", "maxItems": s["minItems"] - 1}))
+            if "maxItems" in s:
+                negated_arrays.append(
+                    JSONTypeArray({"type": "array", "minItems": s["maxItems"] + 1}))
+            if not negated_arrays:
+                return non_arrays
+            joined = boolToConstructor.get("anyOf")({"anyOf": negated_arrays})
+            return non_arrays.join(joined)
+
+        raise UnsupportedNegatedArray(schema=s)
 
 
 class JSONTypeObject(JSONschema):
@@ -1557,15 +1572,32 @@ class JSONTypeObject(JSONschema):
 
     @staticmethod
     def neg(s):
-        # for k, default in JSONTypeObject.kw_defaults.items():
-        #     if s.__getattr__(k) != default:
-        #         break
-        # else:
-        if s.keys() & definitions.JtypesToKeywords['object']:
-            raise UnsupportedNegatedObject(schema=s)
-        else: 
-             return boolToConstructor.get("anyOf")(
+        obj_kws = s.keys() & set(definitions.JtypesToKeywords['object'])
+        non_objects = boolToConstructor.get("anyOf")(
             {"anyOf": get_default_types_except("object")})
+
+        if not obj_kws:
+            return non_objects
+
+        # Handle negation of minProperties/maxProperties-only constraints
+        simple_kws = obj_kws - {"properties", "additionalProperties",
+                                "patternProperties", "required", "dependencies"}
+        if obj_kws == simple_kws:
+            negated_objects = []
+            if "minProperties" in s:
+                negated_objects.append(
+                    JSONTypeObject({"type": "object",
+                                    "maxProperties": s["minProperties"] - 1}))
+            if "maxProperties" in s:
+                negated_objects.append(
+                    JSONTypeObject({"type": "object",
+                                    "minProperties": s["maxProperties"] + 1}))
+            if not negated_objects:
+                return non_objects
+            joined = boolToConstructor.get("anyOf")({"anyOf": negated_objects})
+            return non_objects.join(joined)
+
+        raise UnsupportedNegatedObject(schema=s)
 
 
 
