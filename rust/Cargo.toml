@@ -1,0 +1,13 @@
+[package]
+name = "jsonsubschema_regex"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "jsonsubschema_regex"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+regex-automata = { version = "0.4", features = ["dfa-build", "dfa-search", "nfa-thompson", "syntax"] }
+regex-syntax = "0.8"

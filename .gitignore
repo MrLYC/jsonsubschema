@@ -10,3 +10,5 @@ dist
 *.egg-info
 *DCO*.pdf
 examples
+.venv/
+rust/target/

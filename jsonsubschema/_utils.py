@@ -14,6 +14,13 @@ import json
 
 import jsonschema
 import portion as I
+
+try:
+    import jsonsubschema_regex as _rust_regex
+    _USE_RUST_REGEX = True
+except ImportError:
+    _USE_RUST_REGEX = False
+
 from greenery import parse
 
 import jsonsubschema.config as config
@@ -177,6 +184,8 @@ def regex_unanchor(p):
 
 def regex_matches_string(regex=None, s=None):
     if regex:
+        if _USE_RUST_REGEX:
+            return _rust_regex.regex_matches(regex, s)
         return _cached_parse(regex).matches(s)
     else:
         return True
@@ -184,6 +193,8 @@ def regex_matches_string(regex=None, s=None):
 
 def regex_meet(s1, s2):
     if s1 and s2:
+        if _USE_RUST_REGEX:
+            return _rust_regex.regex_intersect(s1, s2)
         ret = _cached_parse(s1) & _cached_parse(s2)
         return str(ret.reduce()) if not ret.empty() else None
     elif s1:
@@ -198,6 +209,8 @@ def regex_isSubset(s1, s2):
     """regex subset is quite expensive to compute
     especially for complex patterns."""
     if s1 and s2:
+        if _USE_RUST_REGEX:
+            return _rust_regex.regex_is_subset(s1, s2)
         s1 = _cached_parse(s1).reduce()
         s2 = _cached_parse(s2).reduce()
         try:
@@ -214,6 +227,8 @@ def regex_isSubset(s1, s2):
     elif s1:
         return True
     elif s2:
+        if _USE_RUST_REGEX:
+            return _rust_regex.regex_equivalent(s2, ".*")
         return _cached_parse(s2).equivalent(_cached_parse(".*"))
 
 
