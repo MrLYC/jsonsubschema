@@ -155,23 +155,21 @@ class TestUnsupportedNegatedObject(unittest.TestCase):
 class TestUnsupportedEnumCanonicalization(unittest.TestCase):
     """Test cases for UnsupportedEnumCanonicalization exception"""
 
-    def test_array_enum_canonicalization(self):
-        """Enum with array type should raise exception during canonicalization"""
+    def test_array_enum_canonicalization_now_supported(self):
+        """Enum with array type is now supported via pushdown"""
         s1 = {"type": "array", "enum": [[1, 2], [3, 4, 5]]}
         s2 = {"type": "array"}
 
-        with self.assertRaises(UnsupportedEnumCanonicalization) as cm:
-            isSubschema(s1, s2)
+        result = isSubschema(s1, s2)
+        self.assertTrue(result)
 
-        self.assertIn("Canonicalizing an enum schema", str(cm.exception))
-
-    def test_object_enum_canonicalization(self):
-        """Enum with object type should raise exception during canonicalization"""
+    def test_object_enum_canonicalization_now_supported(self):
+        """Enum with object type is now supported via pushdown"""
         s1 = {"type": "object", "enum": [{"name": "Alice"}, {"name": "Bob", "age": 30}]}
         s2 = {"type": "object"}
 
-        with self.assertRaises(UnsupportedEnumCanonicalization) as cm:
-            isSubschema(s1, s2)
+        result = isSubschema(s1, s2)
+        self.assertTrue(result)
 
     def test_integer_enum_succeeds(self):
         """Enum with integer type should succeed (supported)"""
