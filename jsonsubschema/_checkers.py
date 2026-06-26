@@ -1481,7 +1481,7 @@ class JSONTypeObject(JSONschema):
                     for k in extra_patterns_on_rhs:
                         if not s1.additionalProperties.isSubtype(s2.patternProperties[k]):
                             try:  # means regex k is infinite
-                                parse(k).cardinality()
+                                utils._cached_parse(k).cardinality()
                             except OverflowError:
                                 print_db("__08__")
                                 return False

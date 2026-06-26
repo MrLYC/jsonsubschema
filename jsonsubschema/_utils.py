@@ -5,6 +5,7 @@ Created on May 24, 2019
 
 import copy
 import fractions
+import functools
 import math
 import numbers
 import re
@@ -131,6 +132,12 @@ def print_db(*args):
 #
 
 
+@functools.lru_cache(maxsize=1024)
+def _cached_parse(pattern):
+    """Cache greenery parse() results — FSM construction is expensive."""
+    return parse(pattern)
+
+
 def prepare_pattern_for_greenry(s):
     """The greenery library we use for regex intersection assumes
     patterns are unanchored by default. Anchoring chars ^ and $ are
@@ -170,14 +177,14 @@ def regex_unanchor(p):
 
 def regex_matches_string(regex=None, s=None):
     if regex:
-        return parse(regex).matches(s)
+        return _cached_parse(regex).matches(s)
     else:
         return True
 
 
 def regex_meet(s1, s2):
     if s1 and s2:
-        ret = parse(s1) & parse(s2)
+        ret = _cached_parse(s1) & _cached_parse(s2)
         return str(ret.reduce()) if not ret.empty() else None
     elif s1:
         return s1
@@ -191,8 +198,8 @@ def regex_isSubset(s1, s2):
     """regex subset is quite expensive to compute
     especially for complex patterns."""
     if s1 and s2:
-        s1 = parse(s1).reduce()
-        s2 = parse(s2).reduce()
+        s1 = _cached_parse(s1).reduce()
+        s2 = _cached_parse(s2).reduce()
         try:
             s1.cardinality()
             s2.cardinality()
@@ -207,7 +214,7 @@ def regex_isSubset(s1, s2):
     elif s1:
         return True
     elif s2:
-        return parse(s2).equivalent(parse(".*"))
+        return _cached_parse(s2).equivalent(_cached_parse(".*"))
 
 
 # def regex_isProperSubset(s1, s2):
@@ -236,7 +243,7 @@ def string_range_to_regex(min, max):
 
 
 def complement_of_string_pattern(s):
-    return str(parse(s).everythingbut().reduce())
+    return str(_cached_parse(s).everythingbut().reduce())
 
 
 def lcm(x, y):
